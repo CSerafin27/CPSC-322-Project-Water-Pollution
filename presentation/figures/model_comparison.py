@@ -43,7 +43,11 @@ medium_mask = (
         (df["Sanitation Coverage (% of Population)"].between(30, 50, inclusive="left")) |
         (df["Healthcare Access Index (0-100)"].between(30, 50, inclusive="left"))
     )
+<<<<<<< HEAD
     & ~high_mask  # don’t overwrite High
+=======
+    & ~high_mask  
+>>>>>>> df4f9d7 (Fixed risk level)
 )
 
 df.loc[medium_mask, "Risk"] = "Medium"
