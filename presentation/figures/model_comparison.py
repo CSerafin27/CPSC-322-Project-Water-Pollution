@@ -10,18 +10,44 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, confu
 # --------------------------------------------------------
 # Load dataset
 # --------------------------------------------------------
-df = pd.read_csv("data/water_pollution_disease.csv")
+df = pd.read_csv("/Users/charlesserafin/Desktop/School/2025-2026/CPSC 322/CPSC-322-Project-Water-Pollution/data/water_pollution_disease.csv")
 
-# Create Risk label
-df["Risk"] = pd.cut(
-    df["Contaminant Level (ppm)"],
-    bins=[-1, 5, 8, 10_000],
-    labels=["Low", "Medium", "High"]
+# start with Low for everyone
+df["Risk"] = "Low"
+
+# -------- High risk conditions --------
+high_mask = (
+    (df["Contaminant Level (ppm)"] > 8) |
+    (df["Lead Concentration (µg/L)"] > 10) |
+    (df["Nitrate Level (mg/L)"] > 50) |
+    (df["Bacteria Count (CFU/mL)"] > 500) |
+    (df["Turbidity (NTU)"] > 10) |
+    (df["Dissolved Oxygen (mg/L)"] < 3) |
+    (df["Access to Clean Water (% of Population)"] < 40) |
+    (df["Sanitation Coverage (% of Population)"] < 30) |
+    (df["Healthcare Access Index (0-100)"] < 30)
 )
 
-df = df.dropna(subset=["Risk"])
+df.loc[high_mask, "Risk"] = "High"
 
-# Feature matrix (numeric only)
+# -------- Medium risk conditions (only where not already High) --------
+medium_mask = (
+    (
+        (df["Contaminant Level (ppm)"].between(5, 8, inclusive="right")) |
+        (df["Lead Concentration (µg/L)"].between(5, 10, inclusive="right")) |
+        (df["Nitrate Level (mg/L)"].between(25, 50, inclusive="right")) |
+        (df["Bacteria Count (CFU/mL)"].between(100, 500, inclusive="right")) |
+        (df["Turbidity (NTU)"].between(5, 10, inclusive="right")) |
+        (df["Dissolved Oxygen (mg/L)"].between(3, 5, inclusive="neither")) |
+        (df["Access to Clean Water (% of Population)"].between(40, 60, inclusive="left")) |
+        (df["Sanitation Coverage (% of Population)"].between(30, 50, inclusive="left")) |
+        (df["Healthcare Access Index (0-100)"].between(30, 50, inclusive="left"))
+    )
+    & ~high_mask  # don’t overwrite High
+)
+
+df.loc[medium_mask, "Risk"] = "Medium"
+
 X = df.select_dtypes(include=["float64", "int64"])
 y = df["Risk"]
 
